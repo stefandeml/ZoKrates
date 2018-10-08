@@ -90,7 +90,7 @@ impl<T: Field> Into<FlatFunction<T>> for R1CS {
         let mut statements: Vec<FlatStatement<T>> = self.constraints.into_iter().map(|c| c.into()).collect();
 
         // define the entire witness
-        let variables = vec![0; variables_count].iter().enumerate().map(|(i, _)| format!("inter{}", i)).collect();
+        let variables : Vec<String> = vec![0; variables_count].iter().enumerate().map(|(i, _)| format!("inter{}", i)).collect();
 
         // define the inputs with dummy variables: arguments to the function and to the directive
         let inputs: Vec<String> = vec![0; self.input_count].iter().enumerate().map(|(i, _)| format!("input{}", i)).collect();
@@ -108,9 +108,18 @@ impl<T: Field> Into<FlatFunction<T>> for R1CS {
         // insert a directive to set the witness based on the inputs
         statements.insert(0, FlatStatement::Directive(
             DirectiveStatement {
-                outputs: variables,
-                inputs: inputs,
+                outputs: variables.clone(),
+                inputs: inputs.clone(),
                 helper: Helper::LibsnarkGadget(LibsnarkGadgetHelper::Sha256Compress),
+            })
+        );
+
+        // insert a directive to set the witness based on the inputs
+        statements.insert(0, FlatStatement::Directive(
+            DirectiveStatement {
+                outputs: variables.clone(),
+                inputs: inputs.clone(),
+                helper: Helper::LibsnarkGadget(LibsnarkGadgetHelper::Sha256Ethereum),
             })
         );
 
