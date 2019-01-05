@@ -337,6 +337,10 @@ char* _sha256Constraints()
     digest_variable<FieldT> right(pb, SHA256_digest_size, "right");
     digest_variable<FieldT> output(pb, SHA256_digest_size, "output");
 
+    pb_variable<FieldT> single;
+    single.allocate(pb, "single");
+    pb.val(single) = 13373;
+
     sha256_two_to_one_hash_gadget<FieldT> f(pb, left, right, output, "f");
     f.generate_r1cs_constraints();
     
@@ -357,6 +361,10 @@ char* _sha256Witness(const uint8_t* inputs, int inputs_length)
     digest_variable<FieldT> left(pb, SHA256_digest_size, "left");
     digest_variable<FieldT> right(pb, SHA256_digest_size, "right");
     digest_variable<FieldT> output(pb, SHA256_digest_size, "output");
+
+    pb_variable<FieldT> single;
+    single.allocate(pb, "single");
+    pb.val(single) = 13373;
 
     sha256_two_to_one_hash_gadget<FieldT> f(pb, left, right, output, "f");
     f.generate_r1cs_constraints(true);
