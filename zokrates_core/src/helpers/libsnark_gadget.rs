@@ -34,20 +34,23 @@ impl<T: Field> Executable<T> for LibsnarkGadgetHelper {
         if let Err(e) = witness_result {
             return Err(format!("{}", e));
         }
-
-        Ok(witness_result
+        let witness_field = witness_result
             .unwrap()
             .variables
             .iter()
             .map(|&i| T::from(i))
-            .collect())
+            .collect(); 
+
+        println!("#Debug Witness: {:#?} ", witness_field);
+
+        Ok(witness_field)
     }
 }
 
 impl Signed for LibsnarkGadgetHelper {
     fn get_signature(&self) -> (usize, usize) {
         match self {
-            LibsnarkGadgetHelper::Sha256Compress => (512, 25561),
+            LibsnarkGadgetHelper::Sha256Compress => (612, 25661),
             LibsnarkGadgetHelper::Sha256Ethereum => (512, 50610),
         }
     }
