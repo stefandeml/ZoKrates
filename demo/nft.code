@@ -4,89 +4,56 @@ import "hashes/sha256/512bitPadded.code" as sha512
 import "hashes/sha256/1024bitPadded.code" as sha1024
 import "utils/pack/pack256.code" as pack256
 import "utils/pack/unpack128.code" as unpack128
-import "utils/casts/512to256array.code" as cast512to256array
-import "utils/casts/1024to256array.code" as cast1024to256array
-import "utils/casts/128to256array.code" as cast128to256array
+import "utils/casts/1024to256array.code" as splitTo256bitChunks
 import "signatures/verifyEddsa.code" as verifyEddsa
 import "ecc/babyjubjubParams.code" as context
 import "PACKING/split" as split
 
 def concatBuyerRatingProofValue(field[160] buyerID, field[256] buyerPubkey, field[8] buyerRating) -> (field[512]):
 
-	field[512] out = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	field[424] data = [... buyerID, ...buyerPubkey, ...buyerRating]
+	field[88] padding = [0; 88]
 
-	for field i in 0..160 do
-		out[i] = buyerID[i]
-	endfor	
-
-	for field i in 160..416 do
-		out[i] = buyerPubkey[i-160] 
-	endfor	
-
-	for field i in 416..424 do
-		out[i] = buyerRating[i-416] 
-	endfor	
-
-	for field i in 424..512 do
-		out[i] = 0 
-	endfor	
-
+	field[512] out = [...data, ...padding]
 	return out
-
 	
-def concatInvoiceBuyerLeaf(field[256] property, field[160] buyer, field[256] salt) ->(field[1024]):
+def concatInvoiceBuyerLeaf(field[256] property, field[160] buyerValue, field[256] salt) ->(field[1024]):
 
-	field[1024] out = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	field[672] data = [...property, ...buyerValue, ...salt]
+	field[352] padding = [0; 352]
 
-	for field i in 0..256 do
-		out[i] = property[i]
-	endfor	
-
-	for field i in 256..416 do
-		out[i] = buyer[i-256] 
-	endfor	
-
-	for field i in 416..672 do
-		out[i] = salt[i-416] 
-	endfor	
-
-	for field i in 672..1024 do
-		out[i] = 0 
-	endfor	
-
+	field[1024] out = [...data, ...padding]
 	return out
 
 def main(field[2] creditRatingRootHashField, field buyerRatingField, privatefield[160] buyerID, privatefield[256] buyerPubkey, privatefield[2] directionCreditRatingTree, privatefield[256] creditRatingTreeDigest0, privatefield[256] creditRatingTreeDigest1, field nftAmount, field[2] documentRootHashField, privatefield[256] invoiceAmountValue, privatefield[256] invoiceAmountProperty, privatefield[256] invoiceAmountSalt, privatefield[3] invoiceAmountTreeDirection, privatefield[256] invoiceAmountTreeDigests0, privatefield[256] invoiceAmountTreeDigests1, privatefield[256] invoiceAmountTreeDigests2, privatefield[160] invoiceBuyerValue, privatefield[256] invoiceBuyerProperty, privatefield[256] invoiceBuyerSalt, privatefield[3] invoiceBuyerTreeDirection, privatefield[256] invoiceBuyerTreeDigests0, privatefield[256] invoiceBuyerTreeDigests1, privatefield[256] invoiceBuyerTreeDigests2, privatefield[2] SignatureR, privatefield SignatureS, privatefield[2] BuyerPubKey) -> (field):
+	context = context()
 
 	field[128] creditRatingRootHash0 = unpack128(creditRatingRootHashField[0])
 	field[128] creditRatingRootHash1 = unpack128(creditRatingRootHashField[1])
-	field[256] creditRatingRootHash = cast128to256array(creditRatingRootHash0, creditRatingRootHash1) 
+	field[256] creditRatingRootHash = [...creditRatingRootHash0, ...creditRatingRootHash1]
 
 	// Verifies that the buyer is in the registry and the score matches
 	field[254] buyerRatingFieldBits  = split(buyerRatingField)
-	field[8] buyerRating = [buyerRatingFieldBits[246], buyerRatingFieldBits[247], buyerRatingFieldBits[248], buyerRatingFieldBits[249], buyerRatingFieldBits[250], buyerRatingFieldBits[251], buyerRatingFieldBits[252], buyerRatingFieldBits[253] ]
+	field[8] buyerRating = buyerRatingFieldBits[246..254]
 	field[512] buyerRatingProofValue  = concatBuyerRatingProofValue(buyerID, buyerPubkey, buyerRating)
-	lhs, rhs = cast512to256array(buyerRatingProofValue)
-	field[256] leafCreditRatingTree = sha512(lhs, rhs)
-
+	field[256] leafCreditRatingTree = sha512(buyerRatingProofValue[0..256], buyerRatingProofValue[256..512])
 	field ratingTreeResult = verifyMerkleHash2(creditRatingRootHash, leafCreditRatingTree, directionCreditRatingTree,creditRatingTreeDigest0, creditRatingTreeDigest1)
 
 	// // Verfies that the document is owned by the buyer
 	field[128] documentRootHash0 = unpack128(documentRootHashField[0])
 	field[128] documentRootHash1 = unpack128(documentRootHashField[1])
-	field[256] documentRootHash = cast128to256array(documentRootHash0, documentRootHash1) 
+	field[256] documentRootHash = [...documentRootHash0, ...documentRootHash1]
 
-	field[256] padding = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	field[256] padding = [0; 256]
 	field[256] leafInvoiceAmountTree = sha1024(invoiceAmountProperty, invoiceAmountValue, invoiceAmountSalt, padding)
 	field invoiceAmountTreeResult = verifyMerkleHash3(documentRootHash, leafInvoiceAmountTree, invoiceAmountTreeDirection, invoiceAmountTreeDigests0, invoiceAmountTreeDigests1, invoiceAmountTreeDigests2)
 	
 	field[1024] invoiceBuyerTreeValue = concatInvoiceBuyerLeaf(invoiceBuyerProperty, invoiceBuyerValue, invoiceBuyerSalt)
-	a, b, c, d = cast1024to256array(invoiceBuyerTreeValue) 
+	a, b, c, d = splitTo256bitChunks(invoiceBuyerTreeValue) 
 	field[256] leafInvoiceBuyerTree = sha1024(a, b, c, d)
 	field invoiceBuyerTreeResult = verifyMerkleHash3(documentRootHash, leafInvoiceBuyerTree, invoiceBuyerTreeDirection, invoiceBuyerTreeDigests0, invoiceBuyerTreeDigests1, invoiceBuyerTreeDigests2)
 
 	// Ensures that the signature is valid 
-	context = context()
 	field isVerified = verifyEddsa(SignatureR, SignatureS, BuyerPubKey, documentRootHash, padding, context)
 
 	// NFT amount needs to be smaller than invoice amount
