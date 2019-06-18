@@ -3,10 +3,14 @@ import "./pedersenTree3.code" as verifyMerkleHash3
 import "hashes/sha256/512bitPadded.code" as sha512
 import "hashes/sha256/1024bitPadded.code" as sha1024
 import "utils/pack/pack256.code" as pack256
+import "utils/pack/unpack128.code" as unpack128
 import "utils/casts/512to256array.code" as cast512to256array
 import "utils/casts/1024to256array.code" as cast1024to256array
+import "utils/casts/128to256array.code" as cast128to256array
 import "signatures/verifyEddsa.code" as verifyEddsa
 import "ecc/babyjubjubParams.code" as context
+import "PACKING/split" as split
+
 def concatBuyerRatingProofValue(field[160] buyerID, field[256] buyerPubkey, field[8] buyerRating) -> (field[512]):
 
 	field[512] out = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -52,22 +56,27 @@ def concatInvoiceBuyerLeaf(field[256] property, field[160] buyer, field[256] sal
 
 	return out
 
-def main(field[256] creditRatingRootHash, field[8] buyerRating, private field[160] buyerID, private field[256] buyerPubkey, private field[2] directionCreditRatingTree, private field[256] creditRatingTreeDigest0, private field[256] creditRatingTreeDigest1, field[256] documentRootHash, private field[256] invoiceAmountValue, private field[256] invoiceAmountProperty, private field[256] invoiceAmountSalt, private field[3] invoiceAmountTreeDirection, private field[256] invoiceAmountTreeDigests0, private field[256] invoiceAmountTreeDigests1, private field[256] invoiceAmountTreeDigests2, private field[160] invoiceBuyerValue, private field[256] invoiceBuyerProperty, private field[256] invoiceBuyerSalt, private field[3] invoiceBuyerTreeDirection, private field[256] invoiceBuyerTreeDigests0, private field[256] invoiceBuyerTreeDigests1, private field[256] invoiceBuyerTreeDigests2, private field[2] SignatureR, private field SignatureS, private field[2] BuyerPubKey) -> (field):
+def main(field[2] creditRatingRootHashField, field buyerRatingField, privatefield[160] buyerID, privatefield[256] buyerPubkey, privatefield[2] directionCreditRatingTree, privatefield[256] creditRatingTreeDigest0, privatefield[256] creditRatingTreeDigest1, field nftAmount, field[2] documentRootHashField, privatefield[256] invoiceAmountValue, privatefield[256] invoiceAmountProperty, privatefield[256] invoiceAmountSalt, privatefield[3] invoiceAmountTreeDirection, privatefield[256] invoiceAmountTreeDigests0, privatefield[256] invoiceAmountTreeDigests1, privatefield[256] invoiceAmountTreeDigests2, privatefield[160] invoiceBuyerValue, privatefield[256] invoiceBuyerProperty, privatefield[256] invoiceBuyerSalt, privatefield[3] invoiceBuyerTreeDirection, privatefield[256] invoiceBuyerTreeDigests0, privatefield[256] invoiceBuyerTreeDigests1, privatefield[256] invoiceBuyerTreeDigests2, privatefield[2] SignatureR, privatefield SignatureS, privatefield[2] BuyerPubKey) -> (field):
+
+	field[128] creditRatingRootHash0 = unpack128(creditRatingRootHashField[0])
+	field[128] creditRatingRootHash1 = unpack128(creditRatingRootHashField[1])
+	field[256] creditRatingRootHash = cast128to256array(creditRatingRootHash0, creditRatingRootHash1) 
 
 	// Verifies that the buyer is in the registry and the score matches
+	field[254] buyerRatingFieldBits  = split(buyerRatingField)
+	field[8] buyerRating = [buyerRatingFieldBits[246], buyerRatingFieldBits[247], buyerRatingFieldBits[248], buyerRatingFieldBits[249], buyerRatingFieldBits[250], buyerRatingFieldBits[251], buyerRatingFieldBits[252], buyerRatingFieldBits[253] ]
 	field[512] buyerRatingProofValue  = concatBuyerRatingProofValue(buyerID, buyerPubkey, buyerRating)
 	lhs, rhs = cast512to256array(buyerRatingProofValue)
 	field[256] leafCreditRatingTree = sha512(lhs, rhs)
 
 	field ratingTreeResult = verifyMerkleHash2(creditRatingRootHash, leafCreditRatingTree, directionCreditRatingTree,creditRatingTreeDigest0, creditRatingTreeDigest1)
-	
 
 	// // Verfies that the document is owned by the buyer
-	// documentBuyerTreePreimage = concatDocumentBuyerProofValue(buyerID, documentBuyerProperty, documentBuyerSalt)
-	// leafDocumentBuyerTree = sha1024(documentBuyerTreePreimage)
+	field[128] documentRootHash0 = unpack128(documentRootHashField[0])
+	field[128] documentRootHash1 = unpack128(documentRootHashField[1])
+	field[256] documentRootHash = cast128to256array(documentRootHash0, documentRootHash1) 
 
 	field[256] padding = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
 	field[256] leafInvoiceAmountTree = sha1024(invoiceAmountProperty, invoiceAmountValue, invoiceAmountSalt, padding)
 	field invoiceAmountTreeResult = verifyMerkleHash3(documentRootHash, leafInvoiceAmountTree, invoiceAmountTreeDirection, invoiceAmountTreeDigests0, invoiceAmountTreeDigests1, invoiceAmountTreeDigests2)
 	
@@ -79,13 +88,9 @@ def main(field[256] creditRatingRootHash, field[8] buyerRating, private field[16
 	// Ensures that the signature is valid 
 	context = context()
 	field isVerified = verifyEddsa(SignatureR, SignatureS, BuyerPubKey, documentRootHash, padding, context)
-	isVerified == 1
 
 	// NFT amount needs to be smaller than invoice amount
-	// TBD
+	invoiceAmountValueField = pack256(invoiceAmountValue)
+    field out = if invoiceAmountValueField > nftAmount then 1 else 0 fi
+
 	return 1 
-
-
-
-
-
